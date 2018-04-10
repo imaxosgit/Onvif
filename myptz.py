@@ -42,30 +42,32 @@ requests = ptz.create_type('Stop')
 requests.ProfileToken = media_profile._token
 
 def stop():
-	requests.PanTilt=True
-	requests.Zoom=True
-	ptz.Stop(requests)
-	print 'Stopped'
+        requests.PanTilt=True
+        requests.Zoom=True
+        ptz.Stop(requests)
+        print 'Stopped'
+
 
 
 print
 stop()
 
-def move(pan, tilt, velocity):
+def move(pan, tilt, zoom, velocity):
         print 'Start moving'
         reqconmv.Velocity.PanTilt._x = velocity
-	reqconmv.Velocity.PanTilt._y = velocity
+        reqconmv.Velocity.PanTilt._y = velocity
+        reqconmv.Velocity.Zoom._x = velocity
         token = media_profile._token
-        status = ptz.GetStatus({'ProfileToken':token})
-	sig = 0.01
+	status = ptz.GetStatus({'ProfileToken':token})
+        sig = 0.01
         print 'Pan position:', status.Position.PanTilt._x
         print 'Tilt position:', status.Position.PanTilt._y
         while abs(pan - status.Position.PanTilt._x) > sig  and abs(tilt - status.Position.PanTilt._y) > sig:
             if pan > status.Position.PanTilt._x:
-                reqconmv.Velocity.PanTilt._x = velocity
+                reqconmv.Velocity.PanTilt._x = velocity*0.9
                 print 'going x'
             else:
-                reqconmv.Velocity.PanTilt._x = -1*velocity
+                reqconmv.Velocity.PanTilt._x = -1*velocity*0.9
                 print 'going -x'
             if tilt > status.Position.PanTilt._y:
                 reqconmv.Velocity.PanTilt._y = velocity
@@ -79,28 +81,18 @@ def move(pan, tilt, velocity):
             if abs(tilt - status.Position.PanTilt._y) < sig:
                 reqconmv.Velocity.PanTilt._y = 0
                 break
+            if abs(zoom - status.Position.Zoom._x) < sig:
+                reqconmv.Velocity.Zoom._x = 0
+                break
             ptz.ContinuousMove(reqconmv)
             status = ptz.GetStatus({'ProfileToken':token})
             print 'Pan position:', status.Position.PanTilt._x
             print 'Tilt position:', status.Position.PanTilt._y
+	    print 'Zoom position:', status.Position.Zoom._x
             print '-----------------------------------------------'
-	stop()
+        stop()
 
-def zoom(velocity, scope):
-	print 'Zooming'
-	reqconmv.Velocity.PanTilt._x=0
-	reqconmv.Velocity.PanTilt._y=0
-	reqconmv.Velocity.Zoom._x = velocity
-	while (status.Position.Zoom._x < scope):
-		ptz.ContinuousMove(reqconmv)
-#		print 'Zoom: ', status.Position.Zoom._x
-	stop()
-
-
-
-
-move(-0.5,-0.5, 0.4)
+move(0.85,0.3,0.7,0.5)
 
 sleep(2)
 
-zoom(0.1, 0.5)
